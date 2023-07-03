@@ -3,12 +3,9 @@ import {
   AddToCart,
   UpdateCart,
   RemoveFromCart,
-  GetCart,
-  Checkout,
   GetUserCart,
   getCartItems,
   GetTotal,
-  CheckoutStripes,
   PostPayment
 } from "../controllers/PaymentControllers.js";
 

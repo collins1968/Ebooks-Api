@@ -1,6 +1,5 @@
 import { getBooks, getBook, getCategories, AddBook, getAuthors, getBooksByCategory } from "../controllers/booksControllers.js";
-import { PostPayment } from "../controllers/PaymentControllers.js";
-import { loginRequired, isAdmin } from "../controllers/UsersController.js";
+import { loginRequired} from "../controllers/UsersController.js";
 
 const booksRoutes = (app) => {
     app.route('/books')
