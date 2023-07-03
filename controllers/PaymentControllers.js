@@ -6,24 +6,24 @@ function generateCartId() {
   return randomNumber.toString();
 }
 
-//get the cart ite for the user
-export const GetCart = async (req, res) => {
-  try {
-    // const cartId = req.params.cartId;
-    const cartItems = await sql.query(
-      `SELECT book_id, quantity
-       FROM CartItems
-       WHERE cart_id = ${cartId} `
-    );
-    res.status(200).json(cartItems.recordset);
+// //get the cart ite for the user
+// export const GetCart = async (req, res) => {
+//   try {
+//     // const cartId = req.params.cartId;
+//     const cartItems = await sql.query(
+//       `SELECT book_id, quantity
+//        FROM CartItems
+//        WHERE cart_id = ${cartId} `
+//     );
+//     res.status(200).json(cartItems.recordset);
 
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-  finally {
-    // sql.close()
-  }
-}
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+//   finally {
+//     // sql.close()
+//   }
+// }
 
 
 //get the cart items for the user

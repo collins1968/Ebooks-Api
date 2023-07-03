@@ -19,7 +19,7 @@ const config = {
         password: SQL_PWD,
         options: {
             encrypt: true,
-            trustServerCertificate: false,
+            trustServerCertificate: false
             
         }
     },

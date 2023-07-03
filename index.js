@@ -9,7 +9,7 @@ import { paymentRoutes } from './Routes/PaymentRoutes.js';
 import { closeDb, connectDB } from './utils/database.js';
 
 const app = express();
-app.use(express.static("public"));
+// app.use(express.static("public"));
 app.use(express.json());
 
 //middleware
@@ -55,16 +55,26 @@ app.get('/', (req, res) => {
     }       
 );
 
-app.use(async (req, res, next) => {
-    try {
-        await closeDb();
-        process.exit(1);
-    } catch (error) {
-        console.error('Failed to close database connection')
-        process.exit(1);
+// app.use(async (req, res, next) => {
+//     try {
+//         await closeDb();
+//         process.exit(1);
+//     } catch (error) {
+//         console.error('Failed to close database connection')
+//         process.exit(1);
         
+//     }
+// })
+
+process.on('SIGINT', async () => {
+    try {
+      await closeDB();
+      process.exit(0);
+    } catch (error) {
+      console.error('Failed to close the database connection.');
+      process.exit(1);
     }
-})
+  });
 
 app.listen(config.port || 8080, () => {
     console.log("Server is running");
