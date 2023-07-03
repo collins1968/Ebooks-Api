@@ -1,9 +1,5 @@
 import sql from 'mssql';
-import config from '../db/config.js';
 import { connectDB } from '../utils/database.js';
-
-
-
 
 // Get all books
 export const getBooks = async (req, res) => {

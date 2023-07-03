@@ -1,13 +1,10 @@
 import Stripe from 'stripe';
 import sql from 'mssql';
-import config from '../db/config.js';
 import { connectDB } from '../utils/database.js';
 function generateCartId() {
   const randomNumber = Math.floor(10000 + Math.random() * 90000);
   return randomNumber.toString();
 }
-
-
 
 //get the cart ite for the user
 export const GetCart = async (req, res) => {
@@ -53,8 +50,6 @@ export const GetUserCart = async (req, res) => {
 };
 }
 
-
-
 //create a cart for the user when they register or log in
 export const CreateCart = async (req, res) => {
   try {
@@ -62,8 +57,6 @@ export const CreateCart = async (req, res) => {
     const cartId = generateCartId();
     let pool = await connectDB();
     const result = await pool.request()
-    
-    
     .input('cartId', sql.Int, cartId)
     .input('userId', sql.Int, userId)
     .input('created_at', sql.DateTime, new Date())
@@ -76,9 +69,7 @@ export const CreateCart = async (req, res) => {
     SELECT @cartId AS cartId;
   `);
 
-    res.status(200).json({ message: 'Cart created successfully', cartId: cartId  });
-    console.log(cartId);
-    
+    res.status(200).json({ message: 'Cart created successfully', cartId: cartId  });    
   } catch (error) {
     res.status(201).json({ error: error.message }); 
   }
@@ -87,7 +78,6 @@ export const CreateCart = async (req, res) => {
 // get cart items
 export const getCartItems = async (req, res) => {
   try {
-    // const {cartId} = req.params;
     const cartId = req.params.cartId;
     let pool = await connectDB();
     const result = await pool.request()
@@ -116,13 +106,10 @@ export const AddToCart = async (req, res) => {
     request.input('quantity', sql.Int, quantity);
     request.input('createdAt', sql.DateTime, new Date());
     request.input('updatedAt', sql.DateTime, new Date());
-
     const query = `
       INSERT INTO CartItems (cart_id, book_id, quantity, created_at, updated_at)
       VALUES (@cartId, @bookId, @quantity, @createdAt, @updatedAt)`;
-
     const result = await request.query(query);
-
     res.status(200).json({ message: 'Book added to cart successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -201,8 +188,6 @@ export const PostPayment = async (req, res) => {
   try {
     const stripe = new Stripe('sk_test_51NM8u2LGQyKikAGGwFg0GZq0y1Wjc6w06B2RntwLuC28Tsy2QVuGNnP8gGOzx7MrW3z5ZAGArok6Y5bxSIQ76z5k00QE5QYyGV');
     const  cartId  = req.params.cartId;
-    // const itemId = req.params.itemId;
-
     const totalAmount = await calculateTotalAmount(cartId);
 
     const paymentIntent = await stripe.paymentIntents.create({

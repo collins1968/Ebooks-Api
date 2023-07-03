@@ -13,8 +13,6 @@ const booksRoutes = (app) => {
         .get(loginRequired, getAuthors)  
     app.route('/books/:categoryName')
         .get(loginRequired, getBooksByCategory)
-    
-
 }
 
 export default booksRoutes;
