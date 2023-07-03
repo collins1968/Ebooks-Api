@@ -103,55 +103,6 @@ export const getCartItems = async (req, res) => {
   }
 }
 
-// export const AddToCart = async (req, res) => {
-//   try {
-//     const cartId = req.params.cartId;
-//     const { bookId, quantity } = req.body;
-//     let pool = await connectDB();
-
-//     // Check if the book already exists in the cart
-//     const existingCartItem = await pool
-//       .request()
-//       .input('cartId', sql.Int, cartId)
-//       .input('bookId', sql.Int, bookId)
-//       .query(
-//         `SELECT *
-//          FROM CartItems
-//          WHERE cart_id = @cartId
-//            AND book_id = @bookId`
-//       );
-
-//     if (existingCartItem.recordset.length > 0) {
-//       // Update the quantity if the book already exists
-//       await pool
-//         .request()
-//         .input('cartId', sql.Int, cartId)
-//         .input('bookId', sql.Int, bookId)
-//         .input('quantity', sql.Int, quantity)
-//         .query(
-//           `UPDATE CartItems
-//            SET quantity = @quantity, updated_at = GETDATE()
-//            WHERE cart_id = @cartId
-//              AND book_id = @bookId`
-//         );
-//     } else {
-//       // Insert a new record if the book doesn't exist
-//       await pool
-//         .request()
-//         .input('cartId', sql.Int, cartId)
-//         .input('bookId', sql.Int, bookId)
-//         .input('quantity', sql.Int, quantity)
-//         .query(
-//           `INSERT INTO CartItems (cart_id, book_id, quantity, created_at, updated_at)
-//            VALUES (@cartId, @bookId, @quantity, GETDATE(), GETDATE())`
-//         );
-//     }
-
-//     res.status(200).json({ message: 'Book added to cart successfully' });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 
 //add a book to the cart
 export const AddToCart = async (req, res) => {
@@ -213,10 +164,10 @@ export const RemoveFromCart = async (req, res) => {
   }
 }
 
-//calculate total amount
-export const GetTotal = async (req, res) => {
+
+// function to calculate the total amount
+const calculateTotalAmount = async (cartId) => {
   try {
-    const cartId = req.params.cartId;
     const pool = await connectDB();
     const result = await pool
       .request()
@@ -228,7 +179,43 @@ export const GetTotal = async (req, res) => {
         WHERE ci.cart_id = @cartId
       `);
     const totalAmount = result.recordset[0].total_amount;
+    return totalAmount;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+// Handle the GET request for calculating the total amount
+export const GetTotal = async (req, res) => {
+  try {
+    const cartId = req.params.cartId;
+    const totalAmount = await calculateTotalAmount(cartId);
     res.json({ total_amount: totalAmount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Handle the POST request for payment
+export const PostPayment = async (req, res) => {
+  try {
+    const stripe = new Stripe('sk_test_51NM8u2LGQyKikAGGwFg0GZq0y1Wjc6w06B2RntwLuC28Tsy2QVuGNnP8gGOzx7MrW3z5ZAGArok6Y5bxSIQ76z5k00QE5QYyGV');
+    const  cartId  = req.params.cartId;
+    // const itemId = req.params.itemId;
+
+    const totalAmount = await calculateTotalAmount(cartId);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: totalAmount,
+      currency: 'usd',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -236,93 +223,7 @@ export const GetTotal = async (req, res) => {
 
 
 
-//proceed to checkout and create an order
-export const Checkout = async (req, res) => {
-  try {
-    const userId = req.body.userId;
-    const totalAmount = req.body.totalAmount;
-    const orderDate = new Date().toISOString().split('T')[0];
 
-    // Connect to the database
-    await connectDB();
-
-    // Begin a database transaction
-    await sql.query('BEGIN');
-
-    // Create a new order record
-    const result = await sql.query(
-      `INSERT INTO Orders (user_id, total_amount, order_date, created_at, updated_at)
-       OUTPUT INSERTED.order_id
-       VALUES (${userId}, ${totalAmount}, '${orderDate}', GETDATE(), GETDATE())`
-    );
-
-    const orderId = result.recordset[0].order_id;
-
-    // Retrieve the cart items for the user
-    const cartItems = await sql.query(
-      `SELECT book_id, quantity
-       FROM CartItems
-       WHERE cart_id = ${cartId}`
-    );
-
-    // Insert the cart items as order item records
-    for (const cartItem of cartItems.recordset) {
-      await sql.query(
-        `INSERT INTO OrderItems (order_id, book_id, quantity, created_at, updated_at)
-         VALUES (${orderId}, ${cartItem.book_id}, ${cartItem.quantity}, GETDATE(), GETDATE())`
-      );
-      }
-
-    // Clear the user's cart by deleting the cart item records
-    await sql.query(`DELETE FROM CartItems WHERE cart_id = ${cartId}`);
-
-    // Commit the transaction
-    await sql.query('COMMIT');
-
-    // Close the database connection
-    // await sql.close();
-
-    res.sendStatus(201);
-  } catch (err) {
-    console.error(err);
-
-    // Rollback the transaction in case of any errors
-    await sql.query('ROLLBACK');
-
-    res.status(500).json({ error: 'Failed to create order' });
-  }
-}
-
-//checkout using stripes
-
-
-// Stripe secret key
-
-const stripe = new Stripe('sk_test_51NM8u2LGQyKikAGGwFg0GZq0y1Wjc6w06B2RntwLuC28Tsy2QVuGNnP8gGOzx7MrW3z5ZAGArok6Y5bxSIQ76z5k00QE5QYyGV');
-
-// testing stripe payment
-export const PostPayment = async (req, res) => {
-
-
-    const calculateOrderAmount = (items) => {
-        // Replace this constant with a calculation of the order's amount
-        // Calculate the order total on the server to prevent
-        // people from directly manipulating the amount on the client
-        return 1400;
-      };
-      const { items } = req.body;
-       // Create a PaymentIntent with the order amount and currency
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: calculateOrderAmount(items),
-    currency: "usd",
-    automatic_payment_methods: {
-      enabled: true,
-    },
-  });
-  res.send({
-    clientSecret: paymentIntent.client_secret,
-  });
-    }
 
 //integrating checkout using stripes
 export const CheckoutStripes = async(req, res) => {

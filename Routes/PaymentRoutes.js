@@ -26,6 +26,6 @@ export const paymentRoutes = (app) => {
     .delete(loginRequired, RemoveFromCart);
   app.route("/cart/:cartId/total")
     .get(loginRequired, GetTotal);
-  app.route("/create-payment-intent")
+  app.route("/create-payment-intent/:cartId")
     .post(PostPayment)
 };
