@@ -191,7 +191,7 @@ export const PostPayment = async (req, res) => {
     const totalAmount = await calculateTotalAmount(cartId);
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalAmount,
+      amount: totalAmount * 100,
       currency: 'usd',
       automatic_payment_methods: {
         enabled: true,
